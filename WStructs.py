@@ -24,7 +24,7 @@ class controlled(WSclient):
 
     async def recieve(self):
         with connect(ServerIP) as websocket:
-            await msg = websocket.recv()
+            msg = await websocket.recv()
             #error check and send react accordingly. This should be the only thing run on a client side
             #check for ON/OFF or EchoState
             if (msg == 'Echo_State'):
@@ -80,5 +80,14 @@ class controller:
         ToBeTog = self.groups[Group]
         for tog in ToBeTog:
             tog.toggle()
-    
 
+class Connections:
+    def __init__(self):
+        self.controllers = {}
+        self.devices = {}
+    
+    def addDevice(self, ID, Device):
+        self.devices[ID] = Device
+    
+    def addController(self, ID, Controller):
+        self.controllers[ID] = Controller
