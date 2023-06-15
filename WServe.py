@@ -42,7 +42,7 @@ async def handler(websocket):
         #to-do organize error codes
 
 async def main():
-    async with serve(handler, '10.4.50.240', 8000):
+    async with serve(handler, '127.0.0.1', 8000):
         await asyncio.Future()
 
 asyncio.run(main())
