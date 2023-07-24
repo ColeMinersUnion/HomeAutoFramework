@@ -1,6 +1,7 @@
 import asyncio
 import websockets
 import time
+from random import randint
 
 class client:
 
@@ -25,6 +26,12 @@ class client:
     async def Response(self, websocket, message):
         while("PONG" in message or "HEYO" in message):
             time.sleep(2)
+
+            if(randint(0, 10) == 2):
+                print("Sending message to another client")
+                await self.Talk(websocket)
+
+
             await websocket.send("PING")
             print("PING")
             message = await websocket.recv()
@@ -33,6 +40,9 @@ class client:
         if("NONO" in message):
             return "001"
         
+    async def Talk(self, websocket):
+        await websocket.send("MSGS1234jklq")
+
     async def main(self):
         await asyncio.gather(self.JoinAndVibe())
             
