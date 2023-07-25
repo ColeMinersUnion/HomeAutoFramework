@@ -2,48 +2,63 @@ import asyncio
 import websockets
 import time
 from random import randint
+import json
 
 class client:
 
     def __init__(self, ID):
         self.ID = ID
+        self.others = []
+        
+    def start(self):
         asyncio.run(self.JoinAndVibe())
-
-    def joinMSG(self):
-        return "JOIN" + self.ID
 
     async def JoinAndVibe(self):
         uri="ws://localhost:8080"
 
         async with websockets.connect(uri) as websocket:
 
-            await websocket.send(self.joinMSG())
+            await websocket.send(self.genMsg("Join", "Server", msg=self.ID))
             async for message in websocket:
                 await self.Response(websocket, message)
-                return "000"
                 
 
     async def Response(self, websocket, message):
-        while("PONG" in message or "HEYO" in message):
+        message = json.loads(message)
+        while(message["Type"] == "PONG" or message["Type"] == "Welcome" or message["Type"] == "Command"):
             time.sleep(2)
 
-            if(randint(0, 10) == 2):
-                print("Sending message to another client")
-                await self.Talk(websocket)
+            if message["Type"] == "Welcome":
+                print(message)
+                for i in message["Message"]:
+                    self.others.append(i)
+                print("Connection Successful\n")
+
+                print(self.others)
+                print("\n")
+
+            elif message["Type"] == "Command":
+                print(message["Message"])
+        
+            if(randint(0, 10) == 2 and len(self.others) > 0):
+               await websocket.send(self.genMsg("Command", self.others[0], msg="Hey!"))
+                
+            
 
 
-            await websocket.send("PING")
+            await websocket.send(self.genMsg("PING", "Server"))
             print("PING")
             message = await websocket.recv()
+            message = json.loads(message)
 
-
-        if("NONO" in message):
-            return "001"
+        quit()
         
-    async def Talk(self, websocket):
-        await websocket.send("MSGS1234jklq")
+    def genMsg(self, Tpe, Recvr, msg="PING"):
+        newMsg = {"Type": Tpe, "Sender": self.ID, "Recipient": Recvr, "Message": msg}
+        return json.dumps(newMsg)
 
     async def main(self):
         await asyncio.gather(self.JoinAndVibe())
             
 example = client("1234jkls")
+example.start()
