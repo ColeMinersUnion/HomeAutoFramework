@@ -3,6 +3,7 @@ import websockets
 import time
 from random import randint
 import json
+from PrintColors import bcolors
 
 class client:
 
@@ -25,17 +26,22 @@ class client:
 
     async def Response(self, websocket, message):
         message = json.loads(message)
-        while(message["Type"] == "PONG" or message["Type"] == "Welcome" or message["Type"] == "Command"):
+        while(message["Type"] == "PONG" or message["Type"] == "Welcome" or message["Type"] == "Command" or message["Type"] == "New_User"):
             time.sleep(2)
 
             if message["Type"] == "Welcome":
-                print(message)
+                print(bcolors.OKBLUE + str(message) + bcolors.ENDC)
                 for i in message["Message"]:
                     self.others.append(i)
                 print("Connection Successful\n")
 
                 print(self.others)
                 print("\n")
+
+            elif message["Type"] == "New_User":
+                print("We got a new User")
+                self.others.append(message["Message"])
+                print(bcolors.WARNING + str(self.others) + bcolors.ENDC)
 
             elif message["Type"] == "Command":
                 print(message["Message"])
@@ -47,7 +53,7 @@ class client:
 
 
             await websocket.send(self.genMsg("PING", "Server"))
-            print("PING")
+            print(bcolors.HEADER + "PING" + bcolors.ENDC)
             message = await websocket.recv()
             message = json.loads(message)
 
@@ -60,5 +66,3 @@ class client:
     async def main(self):
         await asyncio.gather(self.JoinAndVibe())
             
-example = client("1234jkls")
-example.start()
