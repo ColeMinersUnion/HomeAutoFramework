@@ -30,7 +30,12 @@ class MyServer:
             message = json.loads(message)
             if(message["Type"] == "Join" and len(self.connections) < 25):
                 self.logMsg(bcolors.OKGREEN + "CONNECTION SUCCESSFUL" + bcolors.ENDC)
-                self.connections[message["Message"]] = websocket
+
+                tempID = message["Message"]
+
+                await self.NewUserAlert(tempID)
+
+                self.connections[tempID] = websocket
                 await self.Pong(websocket, message)
                 
 
@@ -59,7 +64,10 @@ class MyServer:
             message = json.loads(message)
 
             
-        
+    async def NewUserAlert(self, ID):
+        for device in self.connections:
+            print(device)
+            await self.connections[device].send(self.genMsg("New_User", device, msg=ID))
             
 
     async def Talk(self, msg):
@@ -69,7 +77,7 @@ class MyServer:
             return
         websocket = self.connections[ID]
         message = msg["Message"]
-        self.lohMsg("About to send a message")
+        self.logMsg("About to send a message")
         await websocket.send(self.genMsg("Command", ID, message, msg["Sender"]))
         self.logMsg("sent the message")
 
@@ -91,22 +99,15 @@ server.start()
 
 
 """ TO-DO:
-
-
-I also want to figure out how to send a receive messages to specific devices
-I should be able to increase the delay between ping-pongs because I'm sending messages in between.
-how do i rearrange the awaitable objects so messages have a higher urgency
-
-Keep a text logs of everything that happens
-
-Find a way to close connections without just forcibly breaking out of the connection.
+Find a way to close connections without just forcibly breaking out of the connection. 
 
 """
 
 """Done:
 Ping-Pong
 Integrated Messaging (Before JSON)
-
+Alerts users when a new connection joins
 Implemeted JSON messaging instead of strings
-
+Text file logs
+Client To client communacation
 """
