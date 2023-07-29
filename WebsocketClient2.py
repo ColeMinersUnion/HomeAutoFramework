@@ -21,8 +21,9 @@ class client:
 
             await websocket.send(self.genMsg("Join", "Server", msg=self.ID))
             async for message in websocket:
-                await self.Response(websocket, message)
-                
+                closed = await self.Response(websocket, message)
+                if closed:
+                    break
 
     async def Response(self, websocket, message):
         message = json.loads(message)
@@ -49,13 +50,18 @@ class client:
             if(randint(0, 10) == 2 and len(self.others) > 0):
                await websocket.send(self.genMsg("Command", self.others[0], msg="Hey!"))
                 
-            
+            if randint(0, 20) == 5:
+                print(bcolors.BOLD + bcolors.FAIL + "About to close the websocket!" + bcolors.ENDC + bcolors.ENDC)
+                return True
 
 
             await websocket.send(self.genMsg("PING", "Server"))
             print(bcolors.HEADER + "PING" + bcolors.ENDC)
             message = await websocket.recv()
             message = json.loads(message)
+
+        if message["Type"] == "Close":
+            return True
 
         quit()
         
