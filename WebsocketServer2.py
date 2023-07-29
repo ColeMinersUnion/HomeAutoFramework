@@ -2,6 +2,7 @@ import websockets
 import asyncio
 import time
 import json
+from random import randint
 from PrintColors import bcolors
 
 class MyServer:
@@ -57,6 +58,10 @@ class MyServer:
             if(message["Type"] == "Command"):
                 await self.Talk(message)
 
+            if randint(0, 20) == 9:
+                self.logMsg(bcolors.FAIL + "CLOSING THE CONNECTION" + bcolors.ENDC)
+                await websocket.send(self.genMsg("Close", message["Sender"], msg="NULL"))
+
             time.sleep(2)
             await websocket.send(self.genMsg("PONG", message["Sender"]))
             self.logMsg(bcolors.HEADER + "PONG" + bcolors.ENDC)
@@ -99,7 +104,6 @@ server.start()
 
 
 """ TO-DO:
-Find a way to close connections without just forcibly breaking out of the connection. 
 
 """
 
@@ -109,5 +113,6 @@ Integrated Messaging (Before JSON)
 Alerts users when a new connection joins
 Implemeted JSON messaging instead of strings
 Text file logs
+Closable Connections
 Client To client communacation
 """
