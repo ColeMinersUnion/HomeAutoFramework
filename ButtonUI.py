@@ -1,41 +1,51 @@
-from tkinter import *
-from tkinter import ttk
-from ControllerClient import ControllerClient
+import tkinter as tk
+from Controller2 import Controller
 import asyncio
+import threading
 
-class AsyncApp(Tk):
-    def __init__(self, loop, controller, UpdateInterval = 0.01):
-        super().__init__()
-        self.protocol("WM_DELETE_WINDOW", self.close)
-        self.tasks = []
-        self.controller = controller
-        self.tasks.append(loop.create_task(self.controller.JoinAndVibe()))
-        self.tasks.append(loop.create_task(self.updater(UpdateInterval)))
+class pseudo_example():
 
-    async def updater(self, interval):
-        while True:
-            self.update()
+    def __init__(self, ID):
+        self.root = tk.Tk()
+        self.root.minsize(500, 500)
+        self.controller = Controller(ID)
+        self.joined = False
+
+
+    def app(self,):
+        self.start_button = tk.Button(self.root, text="start", command=lambda: self.create_await_funct())
+        self.start_button.pack()
+
+        self.testfield = tk.Label(self.root, text="output")
+        self.testfield.pack()
+        self.root.mainloop()
+
+    def create_await_funct(self):
+        threading.Thread(target=lambda loop: loop.run_until_complete(self.await_funct()),
+                         args=(asyncio.new_event_loop(),)).start()
+        self.start_button["relief"] = "sunken"
+        self.start_button["state"] = "disabled"
+
+    async def await_funct(self):
+        self.testfield["text"] = "Pinging"
+        self.root.update_idletasks()
+
+        if not self.joined:
+            await self.controller.JoinAndVibe()
+            self.joined = True
+        else:
             await self.controller.Response()
-            await asyncio.sleep(interval)
 
-    def close(self):
-        for task in self.tasks:
-            task.cancel()
-        self.loop.stop()
-        self.destroy()
+        self.testfield["text"] = "About to toggle"
+        self.root.update_idletasks()
+
+        await self.controller.toggle()
+
+        self.testfield["text"] = "toggled"
+        self.root.update_idletasks()
+        self.start_button["relief"] = "raised"
+        self.start_button["state"] = "normal"
 
 
-loop = asyncio.get_event_loop()
-app = AsyncApp(loop, ControllerClient("Cole's-Macbook-Air"))
-
-frame = Frame(app)
-frame2 = Frame(app)
-app.title("UI for Lights")
-lbl = Label(frame, text="Here's my websocket User Interface", justify=LEFT)
-start = Button(frame2, text="Toggle", command=lambda: app.controller.Toggle("ESP32"))
-end = Button(frame2, text="Close Connection", command=lambda: app.controller.end())
-
-frame.pack(padx=10, pady=20)
-frame2.pack(padx=20, pady=10)
-
-app.mainloop()
+if __name__ == '__main__':
+    pseudo_example("Cole's MacBook Air").app()
