@@ -4,10 +4,13 @@ from kivy.uix.button import Button
 from kivy.config import Config
 from kivy.graphics import Color, RoundedRectangle
 from kivy.uix.floatlayout import FloatLayout
+from kivy.clock import Clock
+
+#non kivy imports
 from Controller2 import Controller
 import threading
 import asyncio
-from kivy.clock import Clock
+from functools import partial
 
 Config.set("graphics", "width", "500")
 Config.set("graphics", "height", "300")
@@ -59,11 +62,12 @@ class ControlApp(Controller, App):
         threading.Thread(target=lambda loop: loop.run_until_complete(self.start()),
                          args=(asyncio.new_event_loop(),)).start()
         
-
+    def threadResponse(self):
+        threading.Thread(target=lambda loop: loop.run_until_complete(self.Response()), args=(asyncio.new_event_loop(),)).start()
     
     async def start(self):
         await self.JoinAndVibe()
-        Clock.schedule_interval(await self.Response, 2)
+        Clock.schedule_interval(self.threadResponse, 1)
 
 
 #this will try to open a file, if the file is unable to open, it doesn't exist. So it makes a new file
@@ -78,10 +82,12 @@ App.run()
 
 
 """
-#To - Do
-
+#DONE
 1. Write the last used IP into a file for storage between programs. 
 2. On Open, present with a connect button. this will thread into the connect and will join that way.
+
+#TO-DO
+
 3. Make a widget for any given connection in the others attribute
 4. Whenever a new connection appears, add a widget. (idk)
 5. Make the widget have a button to toggle
