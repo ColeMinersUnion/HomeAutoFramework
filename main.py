@@ -1,49 +1,89 @@
 from kivy.app import App
-from kivy.uix.widget import Widget
-from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
-from kivy.vector import Vector
+#from kivy.uix.widget import Widget
+from kivy.uix.button import Button
+from kivy.config import Config
+from kivy.graphics import Color, RoundedRectangle
+from kivy.uix.floatlayout import FloatLayout
+from Controller2 import Controller
+import threading
+import asyncio
 from kivy.clock import Clock
-from random import randint
 
-class PongGame(Widget):
-    ball = ObjectProperty(None)
+Config.set("graphics", "width", "500")
+Config.set("graphics", "height", "300")
 
-    def serve_ball(self):
-        self.ball.center = self.center
-        self.ball.velocity = Vector(4, 0).rotate(randint(0, 360))
+class RoundedCornerLayout(FloatLayout):
+    """
+    Goal is just to get a rounded rectangle with a button that joins to the server for now
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-    def update(self, dt):
-        self.ball.move()
+        with self.canvas.before:
+            Color(0.6, 0.6, 0.6, 1)
+            self.rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[(40, 40), (40, 40), (40, 40), (40, 40)],)
 
-        # bounce off top and bottom
-        if (self.ball.y < 0) or (self.ball.top > self.height):
-            self.ball.velocity_y *= -1
+        self.bind(pos=lambda obj, pos: setattr(self.rect, "pos", pos))
+        self.bind(size=lambda obj, size: setattr(self.rect, "size", size))
 
-        # bounce off left and right
-        if (self.ball.x < 0) or (self.ball.right > self.width):
-            self.ball.velocity_x *= -1
-    """This is a child of the widget class
-    We want this to function like a normal widget but we needed it to be unique and Identifiable"""
+        self.size_hint = (None, None)
+        self.size = (400, 200)
+        self.pos_hint = {"center_x": 0.5, "center_y": 0.5}
+        self.background_color = 0, 0, 0, 1
 
-class PongBall(Widget):
-    #Velocity of the ball on either axis
-    velocity_x = NumericProperty(0)
-    velocity_y = NumericProperty(0)
-
-    velocity = ReferenceListProperty(velocity_x, velocity_y)
-
-    def move(self):
-        self.pos = Vector(*self.velocity) + self.pos
+        
+    
 
 
-class PongApp(App):
+class ControlApp(Controller, App):
+
+    def __init__(self, ID):
+
+        
+        with open ("Info.txt", 'r') as file:
+            uri = file.readline()
+        
+        Controller.__init__(self, ID)
+        App.__init__(self)
+        
+
     def build(self):
-        game = PongGame()
-        game.serve_ball()
-        Clock.schedule_interval(game.update, 1.0 / 60.0)
-        return game
-    """This is a child of the App class
-    Calls the widget class"""
+        btn = Button(text="JOIN SERVER", font_size="20sp", background_color=(0.5, 0, 0, 1),
+                     color=(0.75, 0, 0, 1), size=(32, 32), size_hint=(0.2, 0.2), pos=(300, 250))
+        btn.bind(on_press=self.callback)
+        r = RoundedCornerLayout()
+        r.add_widget(btn)
+        return(r)
 
-if __name__ == "__main__":
-    PongApp().run()
+    def callback(self, event):
+        threading.Thread(target=lambda loop: loop.run_until_complete(self.start()),
+                         args=(asyncio.new_event_loop(),)).start()
+        
+
+    
+    async def start(self):
+        await self.JoinAndVibe()
+        Clock.schedule_interval(await self.Response, 2)
+
+
+#this will try to open a file, if the file is unable to open, it doesn't exist. So it makes a new file
+try:
+    open("Info.txt", "r")
+except:
+    with open("Info.txt", "w") as file:
+        file.write("ws://localhost:8080")
+
+App = ControlApp("Cole's MacBook Air")    
+App.run()
+
+
+"""
+#To - Do
+
+1. Write the last used IP into a file for storage between programs. 
+2. On Open, present with a connect button. this will thread into the connect and will join that way.
+3. Make a widget for any given connection in the others attribute
+4. Whenever a new connection appears, add a widget. (idk)
+5. Make the widget have a button to toggle
+6. Be able to edit the widget, have a list of icons to choose from, and be able to rename (just on the GUI)
+"""
