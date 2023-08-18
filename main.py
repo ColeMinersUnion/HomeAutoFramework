@@ -1,19 +1,25 @@
-from kivy.app import App
+from kivy.app import App, async_runTouchApp
 #from kivy.uix.widget import Widget
 from kivy.uix.button import Button
 from kivy.config import Config
 from kivy.graphics import Color, RoundedRectangle
 from kivy.uix.floatlayout import FloatLayout
-from kivy.clock import Clock
+from kivy.clock import Clock, ClockBaseBehavior
 
 #non kivy imports
 from Controller2 import Controller
 import threading
 import asyncio
 from functools import partial
+from PrintColors import bcolors
+import json
 
 Config.set("graphics", "width", "500")
 Config.set("graphics", "height", "300")
+
+
+
+
 
 class RoundedCornerLayout(FloatLayout):
     """
@@ -46,9 +52,32 @@ class ControlApp(Controller, App):
         with open ("Info.txt", 'r') as file:
             uri = file.readline()
         
-        Controller.__init__(self, ID)
+        Controller.__init__(self, ID, uri)
         App.__init__(self)
         
+
+    async def Response(self):
+        #rewriting this
+        websocket = self.ws
+
+        await websocket.send(self.genMsg("PING", "Server"))
+        print(bcolors.HEADER + "PING" + bcolors.ENDC)
+        message = await websocket.recv()
+        message = json.loads(message)
+
+        if message["Type"] == "Welcome":
+            print(bcolors.OKBLUE + str(message) + bcolors.ENDC)
+            for i in message["Message"]:
+                self.others.append(i)
+            print("Connection Successful\n")
+
+            print(self.others)
+            print("\n")
+
+        elif message["Type"] == "New_User":
+            print("We got a new User")
+            self.others.append(message["Message"])
+            print(bcolors.WARNING + str(self.others) + bcolors.ENDC)
 
     def build(self):
         btn = Button(text="JOIN SERVER", font_size="20sp", background_color=(0.5, 0, 0, 1),
@@ -62,12 +91,14 @@ class ControlApp(Controller, App):
         threading.Thread(target=lambda loop: loop.run_until_complete(self.start()),
                          args=(asyncio.new_event_loop(),)).start()
         
-    def threadResponse(self):
-        threading.Thread(target=lambda loop: loop.run_until_complete(self.Response()), args=(asyncio.new_event_loop(),)).start()
+    def threadResponse(self, event):
+        threading.Thread(target=lambda loop: loop.run_until_complete(self.Response()), 
+                         args=(asyncio.new_event_loop(),)).start()
     
     async def start(self):
         await self.JoinAndVibe()
-        Clock.schedule_interval(self.threadResponse, 1)
+        await self.Response()
+        Clock.schedule_interval(threadResponse, 1)
 
 
 #this will try to open a file, if the file is unable to open, it doesn't exist. So it makes a new file
@@ -77,9 +108,11 @@ except:
     with open("Info.txt", "w") as file:
         file.write("ws://localhost:8080")
 
-App = ControlApp("Cole's MacBook Air")    
-App.run()
 
+
+App = ControlApp("Cole's MacBook Air")    
+
+App.run()
 
 """
 #DONE
