@@ -56,33 +56,11 @@ class ControlApp(Controller, App):
         App.__init__(self)
         
 
-    async def Response(self):
-        #rewriting this
-        websocket = self.ws
-
-        await websocket.send(self.genMsg("PING", "Server"))
-        print(bcolors.HEADER + "PING" + bcolors.ENDC)
-        message = await websocket.recv()
-        message = json.loads(message)
-
-        if message["Type"] == "Welcome":
-            print(bcolors.OKBLUE + str(message) + bcolors.ENDC)
-            for i in message["Message"]:
-                self.others.append(i)
-            print("Connection Successful\n")
-
-            print(self.others)
-            print("\n")
-
-        elif message["Type"] == "New_User":
-            print("We got a new User")
-            self.others.append(message["Message"])
-            print(bcolors.WARNING + str(self.others) + bcolors.ENDC)
-
     def build(self):
         btn = Button(text="JOIN SERVER", font_size="20sp", background_color=(0.5, 0, 0, 1),
                      color=(0.75, 0, 0, 1), size=(32, 32), size_hint=(0.2, 0.2), pos=(300, 250))
         btn.bind(on_press=self.callback)
+
         r = RoundedCornerLayout()
         r.add_widget(btn)
         return(r)
@@ -91,14 +69,16 @@ class ControlApp(Controller, App):
         threading.Thread(target=lambda loop: loop.run_until_complete(self.start()),
                          args=(asyncio.new_event_loop(),)).start()
         
-    def threadResponse(self, event):
-        threading.Thread(target=lambda loop: loop.run_until_complete(self.Response()), 
-                         args=(asyncio.new_event_loop(),)).start()
+
+    #def threadResponse(self, event):
+        #threading.Thread(target=lambda loop: loop.run_until_complete(self.indef_Ping()), 
+                         #args=(asyncio.new_event_loop(),)).start()
     
     async def start(self):
         await self.JoinAndVibe()
-        await self.Response()
-        Clock.schedule_interval(threadResponse, 1)
+        while True:
+            await asyncio.sleep(1)
+            await self.Response()
 
 
 #this will try to open a file, if the file is unable to open, it doesn't exist. So it makes a new file
