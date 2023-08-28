@@ -8,17 +8,18 @@ import json
 
 
 class Controller(client):
-    def __init__(self, ID):
+    def __init__(self, ID, uri):
         super().__init__(ID)
         self.ws = None
+        self.uri="ws://localhost:8080"
+
 
     async def toggle(self):
         await self.ws.send(self.genMsg("Command", "Server", msg="Toggle"))
 
     async def JoinAndVibe(self):
-        uri="ws://localhost:8080"
 
-        self.ws = await websockets.connect(uri)
+        self.ws = await websockets.connect(self.uri)
 
         await self.ws.send(self.genMsg("Join", "Server", msg=self.ID))
         await self.Response()
